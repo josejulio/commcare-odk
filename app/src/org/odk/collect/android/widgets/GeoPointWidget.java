@@ -1,17 +1,3 @@
-/*
- * Copyright (C) 2009 University of Washington
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package org.odk.collect.android.widgets;
 
 import android.app.Activity;
@@ -33,7 +19,6 @@ import org.javarosa.core.model.data.IAnswerData;
 import org.javarosa.form.api.FormEntryPrompt;
 import org.odk.collect.android.activities.FormEntryActivity;
 import org.odk.collect.android.activities.GeoPointActivity;
-import org.odk.collect.android.activities.GeoPointMapActivity;
 import org.odk.collect.android.logic.PendingCalloutInterface;
 
 import java.text.DecimalFormat;
@@ -46,7 +31,6 @@ import java.text.DecimalFormat;
  */
 public class GeoPointWidget extends QuestionWidget {
     private final Button mGetLocationButton;
-    private final Button mViewButton;
 
     private final TextView mStringAnswer;
     private final TextView mAnswerDisplay;
@@ -62,15 +46,6 @@ public class GeoPointWidget extends QuestionWidget {
 
         mUseMaps = false;
         String appearance = prompt.getAppearanceHint();
-        if ("maps".equalsIgnoreCase(appearance)) {
-            try {
-                // use google maps it exists on the device
-                Class.forName("com.google.android.maps.MapActivity");
-                mUseMaps = true;
-            } catch (ClassNotFoundException e) {
-                mUseMaps = false;
-            }
-        }
 
         setOrientation(LinearLayout.VERTICAL);
 
@@ -105,45 +80,13 @@ public class GeoPointWidget extends QuestionWidget {
             @Override
             public void onClick(View v) {
                 Intent i;
-                if (mUseMaps) {
-                    i = new Intent(getContext(), GeoPointMapActivity.class);
-                } else {
-                    i = new Intent(getContext(), GeoPointActivity.class);
-                }
+                i = new Intent(getContext(), GeoPointActivity.class);
                 ((Activity)getContext()).startActivityForResult(i, FormEntryActivity.LOCATION_CAPTURE);
                 pendingCalloutInterface.setPendingCalloutFormIndex(prompt.getIndex());
             }
         });
 
-        // setup 'view location' button
-        mViewButton = new Button(getContext());
-        WidgetUtils.setupButton(mViewButton,
-                StringUtils.getStringSpannableRobust(getContext(), R.string.show_location),
-                mAnswerFontsize,
-                viewButtonEnabled);
-
-        // launch appropriate map viewer
-        mViewButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String s = mStringAnswer.getText().toString();
-                String[] sa = s.split(" ");
-                double gp[] = new double[4];
-                gp[0] = Double.valueOf(sa[0]);
-                gp[1] = Double.valueOf(sa[1]);
-                gp[2] = Double.valueOf(sa[2]);
-                gp[3] = Double.valueOf(sa[3]);
-                Intent i = new Intent(getContext(), GeoPointMapActivity.class);
-                i.putExtra(LOCATION, gp);
-                getContext().startActivity(i);
-
-            }
-        });
-
         addView(mGetLocationButton);
-        if (mUseMaps) {
-            addView(mViewButton);
-        }
         addView(mAnswerDisplay);
     }
 
@@ -242,7 +185,6 @@ public class GeoPointWidget extends QuestionWidget {
 
     @Override
     public void setOnLongClickListener(OnLongClickListener l) {
-        mViewButton.setOnLongClickListener(l);
         mGetLocationButton.setOnLongClickListener(l);
         mStringAnswer.setOnLongClickListener(l);
         mAnswerDisplay.setOnLongClickListener(l);
@@ -252,7 +194,6 @@ public class GeoPointWidget extends QuestionWidget {
     public void unsetListeners() {
         super.unsetListeners();
 
-        mViewButton.setOnLongClickListener(null);
         mGetLocationButton.setOnLongClickListener(null);
         mStringAnswer.setOnLongClickListener(null);
         mAnswerDisplay.setOnLongClickListener(null);
@@ -261,7 +202,6 @@ public class GeoPointWidget extends QuestionWidget {
     @Override
     public void cancelLongPress() {
         super.cancelLongPress();
-        mViewButton.cancelLongPress();
         mGetLocationButton.cancelLongPress();
         mStringAnswer.cancelLongPress();
         mAnswerDisplay.cancelLongPress();

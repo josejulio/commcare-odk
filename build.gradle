@@ -35,7 +35,6 @@ dependencies {
     debugCompile project(':commcare')
     compile project(':javarosa')
     compile project(':commcare')
-    compile project(':libraries:mapballoons')
     compile project(':libraries:AndroidStaggeredGrid:library')
     compile fileTree(dir: 'app/libs', include: '*.jar')
     compile 'in.srain.cube:grid-view-with-header-footer:1.0.12'
@@ -55,13 +54,6 @@ project.ext {
     buildToolsVersion = "23.0.2"
 }
 project(':libraries:AndroidStaggeredGrid:library') {
-  android{
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
-  }
-}
-
-project(':libraries:mapballoons') {
   android{
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion

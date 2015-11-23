@@ -1,4 +1,3 @@
-include ':libraries:mapballoons'
 include ':libraries:AndroidStaggeredGrid:library'
 include ':javarosa'
 project(':javarosa').projectDir = new File('../javarosa')
