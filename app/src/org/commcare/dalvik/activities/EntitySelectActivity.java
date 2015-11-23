@@ -103,7 +103,6 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
     private static final String EXTRA_IS_MAP = "is_map";
 
     private static final int CONFIRM_SELECT = 0;
-    private static final int MAP_SELECT = 2;
     private static final int BARCODE_FETCH = 1;
     private static final int CALLOUT = 3;
 
@@ -122,8 +121,6 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
     private TextToSpeech tts;
 
     private SessionDatum selectDatum;
-
-    private boolean mResultIsMap = false;
 
     private boolean mMappingEnabled = false;
 
@@ -166,10 +163,6 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
         this.createDataSetObserver();
 
         EntitySelectActivity oldActivity = (EntitySelectActivity)this.getDestroyedActivityState();
-
-        if (savedInstanceState != null) {
-            mResultIsMap = savedInstanceState.getBoolean(EXTRA_IS_MAP, false);
-        }
 
         asw = CommCareApplication._().getCurrentSessionWrapper();
         session = asw.getSession();
@@ -582,14 +575,6 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
                     returnWithResult(intent);
                     return;
                 } else {
-                    //Did we enter the detail from mapping mode? If so, go back to that
-                    if (mResultIsMap) {
-                        mResultIsMap = false;
-                        Intent i = new Intent(this, EntityMapActivity.class);
-                        this.startActivityForResult(i, MAP_SELECT);
-                        return;
-                    }
-
                     if (inAwesomeMode) {
                         // Retain original element selection
                         TreeReference r =
@@ -605,31 +590,6 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
                         }
                         AudioController.INSTANCE.releaseCurrentMediaEntity();
                     }
-                    return;
-                }
-            case MAP_SELECT:
-                if (resultCode == RESULT_OK) {
-                    TreeReference r =
-                            SerializationUtil.deserializeFromIntent(intent,
-                                    EntityDetailActivity.CONTEXT_REFERENCE,
-                                    TreeReference.class);
-
-                    if (inAwesomeMode) {
-                        this.displayReferenceAwesome(r, adapter.getPosition(r));
-                    } else {
-                        Intent i = this.getDetailIntent(r, null);
-                        if (mNoDetailMode) {
-                            returnWithResult(i);
-                        } else {
-                            //To go back to map mode if confirm is false
-                            mResultIsMap = true;
-                            i.putExtra("entity_detail_index", adapter.getPosition(r));
-                            startActivityForResult(i, CONFIRM_SELECT);
-                        }
-                        return;
-                    }
-                } else {
-                    refreshView();
                     return;
                 }
             default:
@@ -801,10 +761,6 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
         switch (item.getItemId()) {
             case MENU_SORT:
                 createSortMenu();
-                return true;
-            case MENU_MAP:
-                Intent i = new Intent(this, EntityMapActivity.class);
-                this.startActivityForResult(i, MAP_SELECT);
                 return true;
             case MENU_ACTION:
                 triggerDetailAction();
