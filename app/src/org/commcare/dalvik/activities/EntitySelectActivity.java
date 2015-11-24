@@ -49,7 +49,6 @@ import org.commcare.android.models.Entity;
 import org.commcare.android.models.NodeEntityFactory;
 import org.commcare.android.tasks.EntityLoaderListener;
 import org.commcare.android.tasks.EntityLoaderTask;
-import org.commcare.android.util.AndroidUtil;
 import org.commcare.android.util.AndroidInstanceInitializer;
 import org.commcare.android.util.DetailCalloutListener;
 import org.commcare.android.util.SerializationUtil;
@@ -175,6 +174,12 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
         asw = CommCareApplication._().getCurrentSessionWrapper();
         session = asw.getSession();
 
+        if (session.getCommand() == null) {
+            // session ended, avoid (session dependent) setup because session
+            // management will exit the activity in onResume
+            return;
+        }
+
         selectDatum = session.getNeededDatum();
 
         shortSelect = session.getDetail(selectDatum.getShortDetail());
@@ -281,7 +286,8 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
         }
         //cts: disabling for non-demo purposes
         //tts = new TextToSpeech(this, this);
-        restoreLastQueryString(TAG + "-" + KEY_LAST_QUERY_STRING);
+
+        restoreLastQueryString();
 
         if (!isUsingActionBar()) {
             searchbox.setText(lastQueryString);
@@ -488,7 +494,7 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
     protected void onStop() {
         super.onStop();
         stopTimer();
-        saveLastQueryString(TAG + "-" + KEY_LAST_QUERY_STRING);
+        saveLastQueryString();
     }
 
     /**
@@ -670,9 +676,11 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
 
 
     @Override
-    public void afterTextChanged(Editable s) {
-        if (getSearchText() == s) {
-            filterString = s.toString();
+    public void afterTextChanged(Editable incomingEditable) {
+        final String incomingString = incomingEditable.toString();
+        final String currentSearchText = getSearchText().toString();
+        if (incomingString.equals(currentSearchText)) {
+            filterString = currentSearchText;
             if (adapter != null) {
                 adapter.applyFilter(filterString);
             }
@@ -702,10 +710,12 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
             menu.add(0, MENU_MAP, MENU_MAP, Localization.get("select.menu.map")).setIcon(
                     android.R.drawable.ic_menu_mapmode);
         }
-        Action action = shortSelect.getCustomAction();
-        if (action != null) {
-            ViewUtil.addDisplayToMenu(this, menu, MENU_ACTION,
-                    action.getDisplay().evaluate());
+        if (shortSelect != null) {
+            Action action = shortSelect.getCustomAction();
+            if (action != null) {
+                ViewUtil.addDisplayToMenu(this, menu, MENU_ACTION,
+                        action.getDisplay().evaluate());
+            }
         }
 
         tryToAddActionSearchBar(this, menu, new ActionBarInstantiator() {
@@ -737,6 +747,7 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
                     @Override
                     public boolean onQueryTextChange(String newText) {
                         lastQueryString = newText;
+                        filterString = newText;
                         if (adapter != null) {
                             adapter.applyFilter(newText);
                         }
@@ -777,10 +788,10 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-
-        //only display the sort menu if we're going to be able to sort
-        //(IE: not until the items have loaded)
+        // only enable sorting once entity loading is complete
         menu.findItem(MENU_SORT).setEnabled(adapter != null);
+        // hide sorting menu when using async loading strategy
+        menu.findItem(MENU_SORT).setVisible((shortSelect == null || !shortSelect.useAsyncStrategy()));
 
         return super.onPrepareOptionsMenu(menu);
     }
@@ -947,8 +958,6 @@ public class EntitySelectActivity extends SessionAwareCommCareActivity
         if (inAwesomeMode) {
             updateSelectedItem(true);
         }
-
-        rebuildMenus();
 
         this.startTimer();
     }

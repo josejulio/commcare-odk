@@ -15,7 +15,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.3.1'
+        classpath 'com.android.tools.build:gradle:1.5.0'
     }
 }
 
@@ -36,14 +36,18 @@ dependencies {
     compile project(':javarosa')
     compile project(':commcare')
     compile project(':libraries:mapballoons')
-    compile project(':libraries:achartengine')
     compile project(':libraries:AndroidStaggeredGrid:library')
     compile fileTree(dir: 'app/libs', include: '*.jar')
     compile 'in.srain.cube:grid-view-with-header-footer:1.0.12'
-    compile 'com.android.support:support-v4:23.1.0'
-    compile 'com.android.support:gridlayout-v7:23.1.0'
+    compile 'com.android.support:support-v4:23.1.1'
+    compile 'com.android.support:gridlayout-v7:23.1.1'
     compile 'com.madgag.spongycastle:core:1.52.0.0'
     compile 'com.madgag.spongycastle:prov:1.52.0.0'
+    compile 'com.google.zxing:core:3.0.0'
+    compile 'ch.acra:acra:4.6.2'
+    compile 'joda-time:joda-time:2.3'
+    compile 'net.sf.kxml:kxml2:2.3.0'
+    compile 'net.zetetic:android-database-sqlcipher:3.3.1-2@aar'
 }
 
 project.ext {
@@ -122,6 +126,7 @@ android {
     dexOptions {
         preDexLibraries = true
         jumboMode = true
+        incremental = true
     }
 
     defaultConfig {
@@ -137,7 +142,7 @@ android {
         // resources from assets folder
         buildConfigField "boolean", "IS_SINGLE_APP_BUILD", "false"
 
-        buildConfigField "String", "CC_AUTHORITY", "\"${applicationId}.provider\""
+        buildConfigField "String", "CC_AUTHORITY", "\"${applicationId}\""
         buildConfigField "String", "ODK_AUTHORITY", "\"${odkProviderStr}\""
 
         buildConfigField "String", "ACRA_URL", "\"${project.ext.ACRA_URL}\""
@@ -200,17 +205,21 @@ android {
       release.setRoot('build-types/release')
     }
     productFlavors {
-      standard {
+      commcare {
+        // builds normal commcare
         // use the settings from defaultConfig
       }
       standalone {
+        // Builds commcare w/ ccz app packaged in the apk.
+        // Must be invoked from command-line w/ args pointing to app domain &
+        // id
         applicationId "org.commcare.${ccDomainSafe}"
         def odkProviderStr = "org.commcare.${ccDomainSafe}.provider.odk"
         manifestPlaceholders = [ odkProvider:odkProviderStr]
 
         buildConfigField "boolean", "IS_SINGLE_APP_BUILD", "true"
         // include this again so that the value get reloaded
-        buildConfigField "String", "CC_AUTHORITY", "\"${applicationId}.provider\""
+        buildConfigField "String", "CC_AUTHORITY", "\"${applicationId}\""
         buildConfigField "String", "ODK_AUTHORITY", "\"${odkProviderStr}\""
       }
     }

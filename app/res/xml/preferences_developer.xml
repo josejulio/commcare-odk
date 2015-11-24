@@ -81,13 +81,7 @@ the License.
         android:enabled="true"
         android:entries="@array/pref_enabled_labels"
         android:entryValues="@array/pref_enabled_vals"
-        android:key="cc-use-smart-inflation"
-        android:title="Smart Image Inflation Enabled" />
-    <ListPreference
-        android:enabled="true"
-        android:entries="@array/target_density_labels"
-        android:entryValues="@array/target_density_vals"
-        android:key="cc-target-density"
-        android:defaultValue="160"
-        android:title="Target Screen Density for Inflation" />
+        android:defaultValue="yes"
+        android:key="cc-fire-triggers-on-save"
+        android:title="Fire triggers on form save" />
 </PreferenceScreen>
